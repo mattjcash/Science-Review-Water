@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Water Unit Review Game (Copy)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#E6F2F7; --surface:#FFFFFF; --ink:#123B54; --muted:#557489;
+  --deep:#0F4C75; --deep-hi:#1B6CA8; --sand:#F2C14E; --water:#3A9AD9; --water-2:#7CC4EE;
+  --line:#BFD9E6; --used:#D3E6EF; --good:#23867A;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky:#0A2232; --surface:#112F44; --ink:#E3F0F6; --muted:#9AB7C8;
+    --deep:#195C8A; --deep-hi:#2577B0; --sand:#F5CB5C; --water:#3A9AD9; --water-2:#2D6F9C;
+    --line:#24506C; --used:#163A52; --good:#4CC2B2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky:#0A2232; --surface:#112F44; --ink:#E3F0F6; --muted:#9AB7C8;
+  --deep:#195C8A; --deep-hi:#2577B0; --sand:#F5CB5C; --water:#3A9AD9; --water-2:#2D6F9C;
+  --line:#24506C; --used:#163A52; --good:#4CC2B2; color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--ink);font-family:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 18px 32px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:18px}
+h1{font-family:"Fredoka","Nunito",system-ui,sans-serif;font-weight:700;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.05;margin:0;letter-spacing:-.01em}
+.sub{margin:6px 0 0;color:var(--muted);font-weight:600}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+label.inline{font-weight:700;color:var(--muted);display:flex;gap:8px;align-items:center}
+select,button,input{font:inherit;color:inherit}
+select{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:6px 10px}
+.btn{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:7px 14px;font-weight:700;cursor:pointer}
+.btn:hover{border-color:var(--deep-hi)}
+.btn.primary{background:var(--deep);border-color:var(--deep);color:#fff}
+.btn.primary:hover{background:var(--deep-hi);border-color:var(--deep-hi)}
+:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
+
+.board-scroll{overflow-x:auto;padding-bottom:6px}
+.board{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;min-width:690px}
+.cat{font-family:"Fredoka","Nunito",sans-serif;font-weight:600;font-size:clamp(1rem,1.7vw,1.3rem);text-align:center;padding:10px 6px 12px;line-height:1.15;border-bottom:4px solid var(--deep);display:flex;align-items:flex-end;justify-content:center;min-height:64px}
+.tile{background:var(--deep);color:var(--sand);border:0;border-radius:14px 14px 14px 4px;font-family:"Fredoka","Nunito",sans-serif;font-weight:700;font-size:clamp(1.6rem,3.2vw,2.5rem);min-height:clamp(64px,10vh,96px);cursor:pointer;position:relative}
+.tile:hover{background:var(--deep-hi)}
+.tile.used{background:var(--used);color:transparent;cursor:default;border-radius:14px}
+.tile.used::after{content:"";position:absolute;inset:0;margin:auto;width:22px;height:22px;border-radius:50%;border:3px dotted var(--line)}
+
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:26px}
+.team{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:14px;display:grid;grid-template-columns:62px 1fr;gap:14px;align-items:center}
+.beaker{width:62px;height:96px;border:3px solid var(--ink);border-top:0;border-radius:0 0 14px 14px;position:relative;overflow:hidden;background:var(--sky)}
+.water{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(var(--water-2),var(--water));transition:height .6s ease}
+.team input{width:100%;border:0;border-bottom:2px dashed var(--line);background:transparent;font-weight:800;font-size:1.05rem;padding:2px 0}
+.score{font-family:"Fredoka","Nunito",sans-serif;font-weight:700;font-size:2rem;line-height:1.1;margin:4px 0}
+.adjust{display:flex;gap:6px}
+.adjust button{border:2px solid var(--line);background:transparent;border-radius:8px;padding:2px 8px;font-weight:700;cursor:pointer;font-size:.9rem}
+.adjust button:hover{border-color:var(--deep-hi)}
+
+dialog{border:0;padding:0;border-radius:20px;width:min(920px,94vw);max-height:92vh;background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(4,30,48,.45)}
+dialog::backdrop{background:rgba(6,35,55,.72)}
+.q-inner{padding:clamp(18px,3vw,34px);overflow:auto;max-height:92vh}
+.q-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.q-cat{font-weight:800;color:var(--muted)}
+.q-pts{font-family:"Fredoka","Nunito",sans-serif;font-weight:700;background:var(--deep);color:var(--sand);border-radius:10px;padding:2px 12px;font-size:1.4rem}
+.q-text{font-family:"Fredoka","Nunito",sans-serif;font-weight:500;font-size:clamp(1.3rem,2.6vw,2rem);line-height:1.3;margin:0 0 16px}
+.q-fig{margin:6px 0 18px;overflow-x:auto}
+.q-fig svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.answer{display:none;border-left:6px solid var(--good);background:var(--sky);border-radius:0 12px 12px 0;padding:14px 18px;font-size:clamp(1.1rem,2vw,1.4rem);font-weight:700;margin-bottom:18px}
+.answer.show{display:block}
+.answer small{display:block;font-weight:600;color:var(--muted);font-size:.85em;margin-top:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.award-label{font-weight:800;color:var(--muted);margin-right:4px}
+.award{display:none;flex-wrap:wrap;gap:10px;align-items:center}
+.award.show{display:flex}
+.close-x{border:0;background:transparent;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--muted);padding:4px 8px}
+
+.done{display:none;text-align:center;margin-top:22px;font-family:"Fredoka","Nunito",sans-serif;font-size:1.4rem;font-weight:600}
+.done.show{display:block}
+@media (prefers-reduced-motion: reduce){.water{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Water on Earth: Unit Review</h1>
+      <p class="sub">Pick a category and point value. Harder questions are worth more.</p>
+    </div>
+    <div class="controls">
+      <label class="inline">Teams
+        <select id="teamCount">
+          <option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </label>
+      <button class="btn" id="resetBtn" type="button">Start a new game</button>
+      <button class="btn" id="cancelReset" type="button" hidden>Cancel</button>
+    </div>
+  </header>
+
+  <div class="board-scroll"><div class="board" id="board" aria-label="Game board"></div></div>
+  <p class="done" id="done">Every question is answered. Check the beakers to see who won!</p>
+  <section class="teams" id="teams" aria-label="Team scores"></section>
+</div>
+
+<dialog id="qDialog" aria-labelledby="qText">
+  <div class="q-inner">
+    <div class="q-meta">
+      <span class="q-cat" id="qCat"></span>
+      <span style="display:flex;gap:8px;align-items:center"><span class="q-pts" id="qPts"></span><button class="close-x" id="closeX" type="button" aria-label="Close without scoring">×</button></span>
+    </div>
+    <p class="q-text" id="qText"></p>
+    <div class="q-fig" id="qFig"></div>
+    <div class="answer" id="qAns"></div>
+    <div class="actions">
+      <button class="btn primary" id="showAns" type="button">Show answer</button>
+      <div class="award" id="award"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+function bars(title, unit, items, max, step, limit){
+  const W=560,H=300,L=56,R=20,T=44,B=46,cw=W-L-R,ch=H-T-B;
+  const y=v=>T+ch-(v/max)*ch;
+  let g=`<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="${title}" style="font-family:Nunito,system-ui,sans-serif">`;
+  g+=`<text x="${W/2}" y="24" text-anchor="middle" font-size="19" font-weight="800" style="fill:var(--ink)">${title}</text>`;
+  for(let v=0;v<=max;v+=step){g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+5}" text-anchor="end" font-size="13" style="fill:var(--muted)">${v}</text>`;}
+  g+=`<text transform="translate(16 ${T+ch/2}) rotate(-90)" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--muted)">${unit}</text>`;
+  const bw=cw/items.length;
+  items.forEach((it,i)=>{const x=L+bw*i+bw*0.25,w=bw*0.5;
+    g+=`<rect x="${x}" y="${y(it[1])}" width="${w}" height="${ch-(y(it[1])-T)}" rx="3" style="fill:var(--water)"/>`;
+    g+=`<text x="${x+w/2}" y="${H-B+22}" text-anchor="middle" font-size="14" font-weight="700" style="fill:var(--ink)">${it[0]}</text>`;});
+  if(limit!=null){g+=`<line x1="${L}" x2="${W-R}" y1="${y(limit)}" y2="${y(limit)}" style="stroke:var(--sand)" stroke-width="4" stroke-dasharray="10 6"/><text x="${W-R}" y="${y(limit)-8}" text-anchor="end" font-size="13" font-weight="800" style="fill:var(--ink)">Shelf limit: ${limit} lbs</text>`;}
+  return g+`<line x1="${L}" x2="${W-R}" y1="${T+ch}" y2="${T+ch}" style="stroke:var(--ink)" stroke-width="2"/></svg>`;
+}
+
+const CATS=[
+ {name:"How Much Water Is in the World?",qs:[
+  {q:"About what percent of all the water on Earth is salt water?",a:"About 97%",n:"Almost all of it is in the oceans."},
+  {q:"Most of Earth’s fresh water is not liquid. Where is most of it found?",a:"Frozen in ice caps and glaciers",n:"That’s why only a small amount is ready to use."},
+  {q:"Look at the graph. About how many times more frozen fresh water than liquid fresh water is there where Kenji lives?",fig:()=>bars("Water Where Kenji Lives","Estimated area",[["Salt Water",140],["Frozen Fresh",60],["Fresh Water",10]],160,20),a:"6 times more",n:"60 ÷ 10 = 6"},
+  {q:"Lena lives near huge glaciers. Omar lives near big lakes. Lena has more total fresh water, but Omar has more water he can actually drink. Why?",a:"Most of Lena’s fresh water is frozen, so it isn’t available for drinking or washing.",n:"Omar’s lake water is liquid and ready to use."},
+  {q:"A pie chart shows ocean, ice, and lake water by surface area. If you redrew it to show volume (how much water there is), which slice would grow? Why?",a:"The salt water slice would grow.",n:"Oceans are very deep, much deeper than lakes and rivers, so they hold far more water than their surface shows."}
+ ]},
+ {name:"How Much Salt Is in the Ocean?",qs:[
+  {q:"When salt dissolves in water, does it disappear?",a:"No! It breaks into pieces too tiny to see, but it’s still there.",n:"You can tell because the water tastes salty."},
+  {q:"Ava stirs 30 grams of salt into 500 grams of water until it dissolves. How much does the salt water weigh?",a:"530 grams",n:"Dissolved salt still adds its weight."},
+  {q:"Theo’s saltwater tank needs to sit on a shelf. Use the graph. Will the shelf hold the whole aquarium?",fig:()=>bars("Parts of Theo’s Aquarium","Weight (lbs)",[["Tank & Water",70],["Salt",10],["Fish & Rocks",40]],140,20,115),a:"No. The total is 120 lbs, which is more than the 115 lb limit.",n:"70 + 10 + 40 = 120"},
+  {q:"Two cups hold the same amount of water. One has sugar dissolved in it. Which cup is heavier, and how could you prove it without tasting?",a:"The cup with sugar is heavier. Weigh both cups on a scale.",n:"The dissolved sugar adds weight even though you can’t see it."},
+  {q:"How could you get the salt back out of a cup of salt water?",a:"Let the water evaporate. The salt is left behind.",n:"Only the water turns into vapor, and the salt stays in the cup."}
+ ]},
+ {name:"Where Does Faucet Water Come From?",qs:[
+  {q:"What do we call fresh water that is found underground?",a:"Groundwater"},
+  {q:"Name two examples of surface water.",a:"Any two: rivers, lakes, streams, ponds, reservoirs"},
+  {q:"Look at the graph. How many times more groundwater than surface water does Maple Falls use each day?",fig:()=>bars("Water Usage in Maple Falls","Millions of gallons per day",[["Surface Water",2],["Groundwater",8]],10,1),a:"4 times more",n:"8 ÷ 2 = 4. They use 10 million gallons in all."},
+  {q:"True or false: Earth has more groundwater than surface water, so every city uses more groundwater than surface water.",a:"False",n:"Some cities use more surface water because it’s easier to reach."},
+  {q:"A town has no lakes or rivers nearby. Where can it get fresh water, and how?",a:"From groundwater, by digging wells to pump it up.",n:"Most of Earth’s liquid fresh water is underground."}
+ ]},
+ {name:"Can We Make It Rain?",qs:[
+  {q:"What is it called when liquid water turns into a gas (water vapor)?",a:"Evaporation"},
+  {q:"What is it called when water vapor cools and turns into tiny droplets, like in a cloud?",a:"Condensation"},
+  {q:"In the bottle and cup model, what does the cold bottle stand for? What does the warm water in the cup stand for?",a:"The bottle is the air (atmosphere). The cup is the ocean (hydrosphere)."},
+  {q:"Put these in order to show how rain forms: precipitation, evaporation, condensation.",a:"Evaporation, then condensation, then precipitation"},
+  {q:"A coastal desert has a cold ocean with warm air above it. Would you predict lots of rain or very little? Explain.",a:"Very little rain.",n:"A cold ocean doesn’t evaporate much water, and warm air doesn’t cool the vapor into droplets."}
+ ]},
+ {name:"How Can You Save a Town from a Hurricane?",qs:[
+  {q:"What is a storm surge?",a:"Ocean water pushed onto land by a hurricane’s winds, causing flooding."},
+  {q:"In an engineering problem, what is a constraint?",a:"A limit on what the solution can be",n:"For example: cost, materials, size, or how it has to look."},
+  {q:"Budget: $500,000 or less. Must protect homes from flooding. Must keep the beach open to visitors. Plan A: $450,000 wall that blocks the beach. Plan B: $480,000 sand dunes with walking paths. Plan C: $600,000 floating barrier. Which plan meets all the constraints?",a:"Plan B",n:"Plan A blocks the beach, and Plan C is over budget."},
+  {q:"Name one natural way to protect a coast from flooding.",a:"Any one: wetlands or marshes, sand dunes, mangroves, oyster reefs"},
+  {q:"Why isn’t the cheapest plan always the best plan?",a:"A plan has to meet all the constraints first.",n:"A cheap plan that breaks a constraint, like not looking natural, can’t be chosen."}
+ ]}
+];
+const POINTS=[100,200,300,400,500];
+const KEY="water-review-v1";
+let state=load();
+
+function fresh(n){return{n,names:Array.from({length:5},(_,i)=>`Team ${i+1}`),scores:[0,0,0,0,0],used:[]};}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.scores))return s;}catch(e){}return fresh(3);}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+const boardEl=document.getElementById("board"),teamsEl=document.getElementById("teams");
+function renderBoard(){
+  boardEl.innerHTML="";
+  CATS.forEach(c=>{const d=document.createElement("div");d.className="cat";d.textContent=c.name;boardEl.appendChild(d);});
+  POINTS.forEach((p,r)=>CATS.forEach((c,ci)=>{
+    const id=`${ci}-${r}`,used=state.used.includes(id);
+    const b=document.createElement("button");b.type="button";b.className="tile"+(used?" used":"");
+    b.textContent=p;b.setAttribute("aria-label",`${c.name} for ${p}${used?", already played":""}`);
+    if(used)b.disabled=true;else b.onclick=()=>openQ(ci,r);
+    boardEl.appendChild(b);
+  }));
+  document.getElementById("done").classList.toggle("show",state.used.length===25);
+}
+function renderTeams(){
+  teamsEl.innerHTML="";
+  const top=Math.max(500,...state.scores.slice(0,state.n));
+  for(let i=0;i<state.n;i++){
+    const s=state.scores[i],pct=Math.max(0,s)/top*88;
+    const t=document.createElement("div");t.className="team";
+    t.innerHTML=`<div class="beaker" aria-hidden="true"><div class="water" style="height:${pct}%"></div></div>
+      <div><input aria-label="Team name" value="${state.names[i].replace(/"/g,"&quot;")}">
+      <div class="score">${s}</div>
+      <div class="adjust"><button type="button" data-d="-100" aria-label="Take away 100 points">−100</button><button type="button" data-d="100" aria-label="Add 100 points">+100</button></div></div>`;
+    t.querySelector("input").oninput=e=>{state.names[i]=e.target.value||`Team ${i+1}`;save();};
+    t.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{state.scores[i]+=+b.dataset.d;save();renderTeams();});
+    teamsEl.appendChild(t);
+  }
+}
+
+const dlg=document.getElementById("qDialog");let cur=null;
+function openQ(ci,r){
+  cur={ci,r};const c=CATS[ci],q=c.qs[r];
+  document.getElementById("qCat").textContent=c.name;
+  document.getElementById("qPts").textContent=POINTS[r];
+  document.getElementById("qText").textContent=q.q;
+  document.getElementById("qFig").innerHTML=q.fig?q.fig():"";
+  const ans=document.getElementById("qAns");
+  ans.innerHTML="";ans.append(q.a);if(q.n){const sm=document.createElement("small");sm.textContent=q.n;ans.appendChild(sm);}
+  ans.classList.remove("show");
+  document.getElementById("showAns").style.display="";
+  const aw=document.getElementById("award");aw.classList.remove("show");
+  aw.innerHTML=`<span class="award-label">Who got it?</span>`;
+  for(let i=0;i<state.n;i++){const b=document.createElement("button");b.type="button";b.className="btn primary";b.textContent=state.names[i];b.onclick=()=>finish(i);aw.appendChild(b);}
+  const none=document.createElement("button");none.type="button";none.className="btn";none.textContent="No one";none.onclick=()=>finish(-1);aw.appendChild(none);
+  dlg.showModal();
+}
+document.getElementById("showAns").onclick=e=>{document.getElementById("qAns").classList.add("show");document.getElementById("award").classList.add("show");e.target.style.display="none";document.querySelector("#award .btn").focus();};
+function finish(team){
+  if(team>=0)state.scores[team]+=POINTS[cur.r];
+  state.used.push(`${cur.ci}-${cur.r}`);save();dlg.close();renderBoard();renderTeams();
+}
+document.getElementById("closeX").onclick=()=>dlg.close();
+dlg.addEventListener("click",e=>{if(e.target===dlg)dlg.close();});
+
+const tc=document.getElementById("teamCount");tc.value=state.n;
+tc.onchange=()=>{state.n=+tc.value;save();renderTeams();};
+const resetBtn=document.getElementById("resetBtn"),cancelReset=document.getElementById("cancelReset");let armed=false;
+function disarm(){armed=false;resetBtn.textContent="Start a new game";resetBtn.classList.remove("primary");cancelReset.hidden=true;}
+resetBtn.onclick=()=>{
+  if(!armed){armed=true;resetBtn.textContent="Yes, clear scores and board";resetBtn.classList.add("primary");cancelReset.hidden=false;return;}
+  const names=state.names;state=fresh(state.n);state.names=names;save();renderBoard();renderTeams();disarm();
+};
+cancelReset.onclick=disarm;
+renderBoard();renderTeams();
+</script>
+</body>
+</html>
